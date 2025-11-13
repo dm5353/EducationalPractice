@@ -91,12 +91,22 @@ namespace WinFormsApp1.DataBase
 
         public DbSet<User> Users { get; set; }
 
+        public AppDbContext() { }
+
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // дом
-            optionsBuilder.UseSqlServer("Data Source=PC\\SQLEXPRESS;Initial Catalog=УП1221;Integrated Security=True;TrustServerCertificate=True;");
-            // шарага
-            //optionsBuilder.UseSqlServer("Data Source=ADCLG1;Initial Catalog=УП1221;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=True;");
+            if (!optionsBuilder.IsConfigured)
+            {
+                // дом
+                optionsBuilder.UseSqlServer("Data Source=PC\\SQLEXPRESS;Initial Catalog=УП1221;Integrated Security=True;TrustServerCertificate=True;");
+                // шарага
+                //optionsBuilder.UseSqlServer("Data Source=ADCLG1;Initial Catalog=УП1221;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=True;");
+            }
         }
 
         // Метод для проверки логина и пароля
@@ -110,6 +120,23 @@ namespace WinFormsApp1.DataBase
             {
                 MessageBox.Show("Ошибка при аутентификации: " + ex.Message);
                 return null;
+            }
+        }
+
+        public void LoadUserImage(User user)
+        {
+            try
+            {
+                var dbUser = Users.AsNoTracking().FirstOrDefault(u => u.UserId == user.UserId);
+                if (dbUser != null && dbUser.UserImageBytes != null)
+                {
+                    using var ms = new MemoryStream(dbUser.UserImageBytes);
+                    user.UserImage = Image.FromStream(ms);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при загруз фотографии: " + ex.Message);
             }
         }
 
@@ -319,23 +346,6 @@ namespace WinFormsApp1.DataBase
             float toPurchase = requiredTotal - materialInStock;
 
             return toPurchase > 0 ? (int)Math.Ceiling(toPurchase) : 0;
-        }
-
-        public void LoadUserImage(User user)
-        {
-            try
-            {
-                var dbUser = Users.AsNoTracking().FirstOrDefault(u => u.UserId == user.UserId);
-                if (dbUser != null && dbUser.UserImageBytes != null)
-                {
-                    using var ms = new MemoryStream(dbUser.UserImageBytes);
-                    user.UserImage = Image.FromStream(ms);
-                }
-            }
-            catch (Exception ex)
-            { 
-                MessageBox.Show("Ошибка при загруз фотографии: " + ex.Message); 
-            }
         }
     }
 }

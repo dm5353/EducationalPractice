@@ -13,6 +13,8 @@ namespace WinFormsApp1.DataBase
 
     public class LocalDbContext : DbContext
     {
+        public LocalDbContext(DbContextOptions<LocalDbContext> options) : base(options) { }
+
         public LocalDbContext()
         {
             Database.EnsureCreated();
@@ -20,24 +22,25 @@ namespace WinFormsApp1.DataBase
 
         public DbSet<LoginHistory> LoginHistories { get; set; }
 
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=local_history.db");
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlite("Data Source=local_history.db");
+            }
         }
 
         public void AddLoginHistory(string login, bool isSuccessful)
         {
             try
             {
-                using var db = new LocalDbContext();
-                db.LoginHistories.Add(new LoginHistory
+                this.LoginHistories.Add(new LoginHistory
                 {
                     Login = login,
                     IsSuccessful = isSuccessful,
                     AttemptTime = DateTime.Now
                 });
-                db.SaveChanges();
+                this.SaveChanges();
             }
             catch (Exception ex)
             {
